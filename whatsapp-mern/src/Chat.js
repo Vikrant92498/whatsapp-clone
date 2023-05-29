@@ -1,6 +1,18 @@
-import React from 'react'
+import React, { useState } from 'react';
 import './Chat.css'
-function chat() {
+import axios from './axios'
+function Chat({messages}) {
+  const [input, setInput] = useState("");
+   const sendMessage= async(e)=>{
+    e.preventDefault();
+    await axios.post('/messages/new',{
+      message:input,
+      name:"Vikrant",
+      timestamp:"Just Now",
+      received:true
+    });
+    setInput("");
+   };
   return (
     <div className='chat'>
       <div className="chat_header">
@@ -15,33 +27,25 @@ function chat() {
         
       </div>
       <div className="chat_body">
-        <p className='chat_message'>
-          <span className='chat_name'>Vikrant</span>
-          This is a messgae
+        {messages.map((message)=>(
+          <p className={`chat_message ${message.received ? "chat_receiver" : ""}`}>
+          <span className='chat_name'>{message.name}</span>
+          {message.message}
           <span className='chat_timestamp'>
-            {new Date().toUTCString()}
+            {message.timestamp}
           </span>
         </p>
-        <p className='chat_message chat_receiver'>
-          <span className='chat_name'>Vikrant</span>
-          This is a messgae
-          <span className='chat_timestamp'>
-            {new Date().toUTCString()}
-          </span>
-        </p>
-      </div>
+        ))}
       <div className="chat_footer">
 
         <form action="">
-          <input 
-          placeholder='Type a message'
-          type='text'
-          />
-          <button  type='submit'>Send a message</button>
+          <input value={input} onChange={e=>setInput(e.target.value)} placeholder='Type a message' type='text'/>
+          <button onClick={sendMessage} type='submit'>Send a message</button>
         </form>
       </div>
+    </div>
     </div>
   )
 }
 
-export default chat
+export default Chat
