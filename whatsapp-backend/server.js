@@ -3,6 +3,7 @@ import express from 'express'
 import mongoose from 'mongoose'
 import Messages from "./dbMessages.js"
 import Pusher from 'pusher';
+import cors from 'cors';
 //app-config
 const app=express()
 const port=process.env.PORT || 9000
@@ -15,11 +16,7 @@ const pusher = new Pusher({
   });
 //middleware
 app.use(express.json());
-app.use((req,res,next)=>{
-  res.setHeader("Access-Control-Allow-Origin","*");
-  res.setHeader("Access-Control-Allow-Headers","*");
-  next();
-});
+app.use(cors());
 //DB congig
 const connection_url='mongodb+srv://vikrantkumar92498:v3zmCWL9I0zyPGfU@cluster0.q1kmmg4.mongodb.net/whatsappdb?retryWrites=true&w=majority'
 mongoose.connect(connection_url,{
@@ -41,6 +38,8 @@ db.once('open',()=>{
       pusher.trigger('messages','inserted',{
         name:messageDetails.name,
         message:messageDetails.message,
+        timestamp:messageDetails.timestamp,
+        received:messageDetails.received
       });
     }else{
       console.log('Error triggering pusher')
@@ -59,10 +58,15 @@ app.get('/messages/sync', (req, res) => {
       });
   });
   
-app.post('/messages/new',(req,res)=>{
-    const dbMessage =req.body;
-    Messages.create(dbMessage);
-    
-});
+  app.post('/messages/new', async (req, res) => {
+    try {
+      const dbMessage = req.body;
+      await Messages.create(dbMessage);
+      res.status(201).send('Message created successfully');
+    } catch (error) {
+      console.error('Error creating message:', error);
+      res.status(500).send('An error occurred while creating the message');
+    }
+  });
 //listen
 app.listen(port, () => console.log(`Listening to localhost:${port}`));
